@@ -1,0 +1,188 @@
+﻿@{
+    ViewBag.Title = "Nguyen Manh Tuan Anh";
+}
+@section styles {
+    <link href="~/Content/dataTables.bootstrap5.min.css" rel="stylesheet" />
+}
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="datatables" class="table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formData" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Create new Product</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="exampleFormControlInput1" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="Name" name="Name" placeholder="Product name">
+                    </div>
+                    <div class="mb-3">
+                        <label for="exampleFormControlInput1" class="form-label">Price</label>
+                        <input type="text" class="form-control" id="Price" name="Price" placeholder="Product price">
+                    </div>
+                    <div class="mb-3">
+                        <label for="exampleFormControlInput1" class="form-label">Quantity</label>
+                        <input type="text" class="form-control" id="Quantity" name="Quantity" placeholder="Product quantity">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="~/Scripts/jquery.dataTables.min.js"></script>
+    <script src="~/Scripts/dataTables.bootstrap5.min.js"></script>
+    <script src="~/Scripts/jquery.validate.min.js"></script>
+    <script src="~/Scripts/sweetalert2.all.min.js"></script>
+
+    <script>
+        $(function () {
+            var myModal = new bootstrap.Modal(document.getElementById('myModal'), {
+                keyboard: false
+            });
+
+            $(document).on("click", "#btnCreate", function () {
+                validator.resetForm();
+                $("#formData").trigger("reset");
+                myModal.show();
+            });
+
+            $('#datatables').DataTable({
+                "paging": true,
+                "ordering": true,
+                "autoWidth": false,
+                "responsive": true,
+                "processing": true,
+                "filter": true,
+                "lengthMenu": [5, 10, 20, 50, 100, 200, 500],
+                "ajax": "@Url.Action("Products", "Home")",
+                "order": [
+                    [0, 'asc']
+                ],
+                "columns": [
+                    {
+                        data: 'ProductId',
+                        className: 'align-middle',
+                        "render": function (data, type, row) {
+                            return `<b>#${row.ProductId}<b>`;
+                        }
+                    },
+                    {
+                        data: 'Name',
+                        className: 'align-middle',
+                    },
+                    {
+                        data: 'Price',
+                        className: 'align-middle',
+                    },
+                    {
+                        data: 'Quantity',
+                        className: 'align-middle',
+                    },
+                ]
+            });
+
+            const validator = $("#formData").validate({
+                rules: {
+                    "Name": {
+                        required: true
+                    },
+                    "Price": {
+                        required: true,
+                        number: true
+                    },
+                    "Quantity": {
+                        required: true,
+                        number: true
+                    },
+                },
+                ignore: [],
+                errorClass: "invalid-feedback",
+                errorElement: "div",
+                errorPlacement: function (e, a) {
+                    jQuery(a).after(e)
+                },
+                highlight: function (e) {
+                    jQuery(e).closest(".form-group").removeClass("is-invalid").addClass("is-invalid")
+                },
+                success: function (e) {
+                    jQuery(e).closest(".form-group").removeClass("is-invalid").addClass("is-valid")
+                },
+                submitHandler: function (form) {
+                    $.ajax({
+                        url: '@Url.Action("CreateProduct", "Home")',
+                        type: $(form).attr('method'),
+                        data: $(form).serialize(),
+                        success: function (res) {
+                            if (res.statusCode === 200) {
+                                validator.resetForm();
+                                $("#formData").trigger("reset");
+                                myModal.hide();
+                                $('#datatables').DataTable().ajax.reload();
+                                notifySuccess('Create Successfully');
+                            }
+                            else if (res.statusCode === 400) {
+                                validator.showErrors(res.data);
+                            }
+                            else {
+                                notifyError(res.data);
+                            }
+                        }
+                    });
+                }
+            });
+
+            function notifySuccess(title) {
+                Swal.fire({
+                    position: 'top-end',
+                    icon: 'success',
+                    title: title,
+                    showConfirmButton: false,
+                    timer: 1500,
+                    toast: true,
+                });
+            }
+
+            function notifyError(title) {
+                Swal.fire({
+                    position: 'top-end',
+                    icon: 'error',
+                    title: title,
+                    showConfirmButton: false,
+                    timer: 1500,
+                    toast: true,
+                });
+            }
+        });
+    </script>
+}
