@@ -24,7 +24,7 @@ namespace WEB.Controllers
 
         public ActionResult Products()
         {
-            var products = client.GetProducts();
+            var products = client.GetProducts().Take(3);
 
             return Json(new
             {
